@@ -1,0 +1,539 @@
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 12px;
+}
+
+h1 {
+    color: #4CAF50;
+    margin: 0 0 8px 0;
+    font-size: 24px;
+}
+
+/* ── Controls ─────────────────────────────────────────────────────── */
+
+.controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    max-width: 100%;
+}
+
+.controls label {
+    font-size: 14px;
+    color: #333;
+    white-space: nowrap;
+}
+
+.controls select,
+.controls button {
+    font-size: 14px;
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fafafa;
+    cursor: pointer;
+}
+
+.controls button {
+    background: #4CAF50;
+    color: white;
+    border-color: #3d8b40;
+}
+.controls button:hover { background: #43a047; }
+
+#hintBtn {
+    background: #f9a825;
+    border-color: #f57f17;
+    color: #333;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    line-height: 1;
+}
+#hintBtn:hover { background: #f57f17; color: #fff; }
+
+#instructions {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+/* ── Board: [Keypads] | [Product grid] ───────────────────────────── */
+
+#board {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    max-width: 100%;
+}
+
+/* Left column: Factor A keypad stacked above Factor B keypad */
+#keypads-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.panel-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.panel-label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #555;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* ── Keypads (blue, left and right) ──────────────────────────────── */
+
+#keypad-left,
+#keypad-right {
+    display: grid;
+    grid-template-columns: repeat(var(--kp-cols, 3), 1fr);
+    gap: 5px;
+}
+
+.key-btn {
+    width:  52px;
+    height: 52px;
+    font-size: 20px;
+    font-weight: bold;
+    background: #1976d2;
+    color: #fff;
+    border: 2px solid #125aa2;
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.12s, transform 0.1s, box-shadow 0.1s;
+}
+
+.key-btn:hover {
+    background: #1565c0;
+    transform: scale(1.07);
+}
+
+.key-btn.key-selected {
+    background: #fff9c4;
+    color: #333;
+    border-color: #f9a825;
+    box-shadow: 0 0 0 2px #f9a825;
+}
+
+/* ── Dim state: keypad not yet active for this step ─────────────── */
+
+/* The dim wrapper fades out its buttons and blocks pointer events */
+.keypad-dim .key-btn {
+    opacity: 0.28;
+    cursor: not-allowed;
+    pointer-events: none;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* ── Impossible Factor A: red flash then fade back to normal ─────── */
+
+@keyframes impossibleFlash {
+    0%   { background: #e53935; color: #fff; border-color: #b71c1c;
+           box-shadow: 0 0 0 3px #ef9a9a; transform: scale(1.14); }
+    40%  { background: #e53935; color: #fff; border-color: #b71c1c; }
+    100% { background: #1976d2; color: #fff; border-color: #125aa2;
+           box-shadow: none;    transform: scale(1); }
+}
+
+.key-btn.key-impossible {
+    animation: impossibleFlash 0.85s ease-out forwards;
+    pointer-events: none;   /* ignore taps during the flash */
+}
+
+/* ── Product cards (center panel) ────────────────────────────────── */
+
+#product-panel {
+    display: grid;
+    grid-template-columns: repeat(var(--prod-cols, 3), 1fr);
+    gap: 5px;
+}
+
+.prod-card {
+    width:  var(--card-size, 58px);
+    height: var(--card-size, 58px);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border-radius: 8px;
+    font-size: var(--card-font, 16px);
+    font-weight: bold;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s, transform 0.12s, box-shadow 0.12s;
+}
+
+.prod-card:hover:not(.prod-matched) { transform: scale(1.07); }
+
+/* Face-down: card-back pattern (diagonal green stripes) */
+.prod-card.prod-down {
+    background-color: #388e3c;
+    background-image:
+        repeating-linear-gradient(
+            45deg,
+            rgba(255,255,255,0.10) 0px,
+            rgba(255,255,255,0.10) 3px,
+            transparent 3px,
+            transparent 10px
+        );
+    color: transparent;
+    border: 2px solid #2e7d32;
+    cursor: default;
+}
+
+/* Flip-reveal animation: applied briefly when a card is auto-revealed */
+@keyframes cardReveal {
+    0%   { transform: scaleX(1);   background-color: #388e3c; }
+    40%  { transform: scaleX(0);   background-color: #388e3c; }
+    60%  { transform: scaleX(0);   background-color: #fff9c4; }
+    100% { transform: scaleX(1);   background-color: #fff9c4; }
+}
+
+.prod-card.prod-reveal {
+    animation: cardReveal 0.35s ease-in-out forwards;
+}
+
+/* Selected / revealed — awaiting factor entry */
+.prod-card.prod-selected {
+    background: #fff9c4;
+    color: #333;
+    box-shadow: 0 0 0 3px #f9a825;
+    cursor: default;
+}
+
+/* Correctly matched — stays visible */
+.prod-card.prod-matched {
+    background: #2e7d32;
+    color: #fff;
+    cursor: default;
+    transform: none;
+    box-shadow: inset 0 0 0 2px #1b5e20;
+}
+.prod-card.prod-matched:hover { transform: none; }
+
+.prod-emoji-tile {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--emoji-font, 160px);
+    line-height: 1;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* ── Status line ──────────────────────────────────────────────────── */
+
+#status {
+    min-height: 1.4em;
+    font-size: 16px;
+    color: #555;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+/* ── Timer (fixed bottom-left) ───────────────────────────────────── */
+
+#timer {
+    position: fixed;
+    left: 12px;
+    bottom: 12px;
+    background: #fff;
+    border-radius: 8px;
+    padding: 8px 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+    font-family: Menlo, Consolas, monospace;
+    font-size: 13px;
+    color: #333;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 14px;
+    z-index: 5;
+}
+
+.timer-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 110px;
+}
+
+.timer-col-score {
+    min-width: 0;
+    justify-content: center;
+}
+
+.timer-col-score .timer-row {
+    justify-content: flex-start;
+    gap: 6px;
+}
+
+#timer .timer-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+#timeBest, #picksBest { color: #4CAF50; font-weight: bold; }
+
+/* ── Hint overlay — N×N multiplication table ─────────────────────── */
+
+#hintOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+}
+#hintOverlay[hidden] { display: none; }
+
+#hintBox {
+    background: #fff;
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.35);
+    max-width:  calc(100vw - 24px);
+    max-height: calc(100vh - 40px);
+    overflow: auto;
+}
+
+#hintHeader {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+#hintCountdown { color: #999; font-weight: normal; margin-left: 6px; }
+
+#multiTable {
+    border-collapse: collapse;
+    font-family: Menlo, Consolas, monospace;
+}
+
+/* Cell sizing scales with level via CSS — Level 4 needs smaller cells */
+#multiTable th,
+#multiTable td {
+    width:  28px;
+    height: 24px;
+    font-size: 11px;
+    text-align: center;
+    border: 1px solid #e0e0e0;
+    padding: 0;
+}
+
+#multiTable th {
+    background: #1976d2;
+    color: #fff;
+    font-weight: bold;
+}
+
+.hint-corner          { background: #0d47a1 !important; font-size: 13px; }
+.hint-diagonal        { background: #e8f5e9; color: #2e7d32; }
+.hint-factor-header   { background: #f9a825 !important; color: #333 !important; }
+.hint-factor-col      { background: #fff9c4; }
+.hint-match           { background: #4CAF50 !important; color: #fff !important; font-weight: bold; }
+
+/* ── Win banner (fixed bottom-right) ─────────────────────────────── */
+
+#winBanner {
+    position: fixed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    right: 12px;
+    bottom: 12px;
+    z-index: 20;
+    animation: winToastIn 0.28s ease-out;
+}
+#winBanner[hidden] { display: none; }
+
+.winner-card {
+    background: white;
+    width: min(360px, calc(100vw - 24px));
+    padding: 16px 18px;
+    border: 1px solid rgba(76,175,80,0.28);
+    border-radius: 8px;
+    text-align: left;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+}
+
+.winner-card h2 {
+    margin: 0 0 12px 0;
+    color: #4CAF50;
+    font-size: 1rem;
+    line-height: 1.25;
+}
+
+.winner-card button {
+    font-size: 16px;
+    padding: 10px 20px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.winner-card button:hover { background: #43a047; }
+
+/* ── Frog parade ─────────────────────────────────────────────────── */
+
+#frogParade {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 15;
+}
+
+.frog {
+    position: absolute;
+    left: 100vw;
+    top: var(--lane, 50vh);
+    font-size: var(--size, 42px);
+    line-height: 1;
+    filter: drop-shadow(0 8px 5px rgba(0,0,0,0.2));
+    animation: frogCross var(--duration, 6s) linear var(--delay, 0s) forwards;
+    will-change: transform;
+}
+
+.frog-icon {
+    display: block;
+    animation: frogHop 0.48s ease-in-out var(--delay, 0s) infinite;
+    will-change: transform;
+}
+
+/* ── Keyframes ───────────────────────────────────────────────────── */
+
+@keyframes winToastIn {
+    from { opacity: 0; transform: translate(16px, 16px) scale(0.96); }
+    to   { opacity: 1; transform: translate(0, 0) scale(1); }
+}
+
+@keyframes frogCross {
+    from { transform: translateX(8vw); }
+    to   { transform: translateX(calc(-120vw - var(--drift, 0px))); }
+}
+
+@keyframes frogHop {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    45%      { transform: translateY(calc(-1 * var(--jump, 24px))) rotate(7deg); }
+}
+
+@media (max-width: 980px), (max-height: 820px) {
+    #board { gap: 16px; }
+
+    #keypads-panel { gap: 14px; }
+
+    .key-btn {
+        width: 48px;
+        height: 48px;
+        font-size: 18px;
+    }
+
+    .prod-card {
+        width: calc(var(--card-size, 58px) * 0.92) !important;
+        height: calc(var(--card-size, 58px) * 0.92) !important;
+        font-size: calc(var(--card-font, 16px) * 0.94) !important;
+    }
+
+    .prod-emoji-tile { font-size: calc(var(--emoji-font, 160px) * 0.92); }
+
+    #timer {
+        position: static;
+        left: auto;
+        bottom: auto;
+        transform: none;
+        margin-top: 8px;
+    }
+}
+
+/* ── Responsive: stack panels vertically on narrow screens ───────── */
+
+@media (max-width: 640px) {
+    body { padding: 8px; }
+    h1 { font-size: 18px; margin-bottom: 6px; }
+
+    .controls { gap: 8px; padding: 6px 10px; margin-bottom: 6px; }
+    .controls label { font-size: 12px; }
+    .controls select, .controls button { font-size: 12px; padding: 5px 8px; }
+    #hintBtn { width: 34px; height: 34px; padding: 0; font-size: 18px; }
+
+    /* Stack everything vertically on narrow screens */
+    #board {
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+    }
+
+    /* Keypads side-by-side inside the stacked panel */
+    #keypads-panel {
+        flex-direction: row;
+        gap: 16px;
+    }
+
+    .key-btn  { width: 42px; height: 42px; font-size: 16px; }
+    .prod-card { width: calc(var(--card-size, 58px) * 0.8) !important;
+                 height: calc(var(--card-size, 58px) * 0.8) !important;
+                 font-size: calc(var(--card-font, 16px) * 0.85) !important; }
+    .prod-emoji-tile { font-size: calc(var(--emoji-font, 160px) * 0.8); }
+
+    #multiTable th, #multiTable td { width: 20px; height: 18px; font-size: 9px; }
+
+    #winBanner { right: 8px; bottom: 8px; }
+    .winner-card { width: min(320px, calc(100vw - 16px)); padding: 12px 14px; }
+    .winner-card h2 { font-size: 0.95rem; margin-bottom: 10px; }
+    .winner-card button { font-size: 14px; padding: 8px 16px; }
+
+    #timer {
+        position: static;
+        left: auto;
+        bottom: auto;
+        transform: none;
+        gap: 10px; font-size: 11px; padding: 6px 10px;
+    }
+    .timer-col { min-width: 80px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #winBanner, .frog, .frog-icon { animation: none; }
+    .frog { display: none; }
+}

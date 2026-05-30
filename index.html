@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiply Match 🐸</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Multiply Match 🐸</h1>
+
+    <div class="controls">
+        <label>
+            Level:
+            <select id="level"></select>
+        </label>
+        <button id="newGame" type="button">New Game</button>
+        <button id="hintBtn" type="button" aria-label="Hint" title="Hint">🛟</button>
+    </div>
+
+    <div id="instructions">
+        The game reveals a <strong>product</strong> — tap its two factors, one on each keypad,
+        or type them with your keyboard/numpad.
+    </div>
+
+    <div id="board">
+
+        <!-- Left side: Factor A keypad stacked above Factor B keypad -->
+        <div id="keypads-panel">
+            <div class="panel-wrap">
+                <div class="panel-label">Factor A</div>
+                <div id="keypad-left"></div>
+            </div>
+            <div class="panel-wrap">
+                <div class="panel-label">Factor B</div>
+                <div id="keypad-right"></div>
+            </div>
+        </div>
+
+        <!-- Right side: product grid -->
+        <div class="panel-wrap">
+            <div class="panel-label">Products</div>
+            <div id="product-panel"></div>
+        </div>
+
+    </div>
+
+    <div id="status">&nbsp;</div>
+
+    <div id="timer">
+        <div class="timer-col">
+            <span class="timer-row">Time:  <span id="timeNow">0:00</span></span>
+            <span class="timer-row">Best:  <span id="timeBest">--:--</span></span>
+        </div>
+        <div class="timer-col">
+            <span class="timer-row">Picks: <span id="picksNow">0</span></span>
+            <span class="timer-row">Best:  <span id="picksBest">--</span></span>
+        </div>
+        <div class="timer-col timer-col-score">
+            <span class="timer-row">Matches: <span id="score">0 / 0</span></span>
+        </div>
+    </div>
+
+    <!-- Multiplication table hint overlay -->
+    <div id="hintOverlay" hidden aria-hidden="true">
+        <div id="hintBox">
+            <div id="hintHeader">
+                Multiplication Table
+                <span id="hintCountdown"></span>
+            </div>
+            <div id="hintContent"></div>
+        </div>
+    </div>
+
+    <div id="winBanner" hidden>
+        <div class="winner-card">
+            <h2 id="winText">You Win! 🎉</h2>
+            <button id="nextLevel" type="button">Next Level</button>
+        </div>
+    </div>
+    <div id="frogParade" aria-hidden="true"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
